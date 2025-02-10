@@ -631,7 +631,10 @@ class ListeningCrawler {
         
   
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        const listPartIds = parts.map((item) => String(item.partId ?? 'defaultId'));
+        const listPartIds = parts.map((item) => 
+          typeof item === 'object' && 'partId' in item ? item.partId : "defaultId"
+        );
+        
         const practiceLink = `${linkWithId}/practice/?part=${
           listPartIds[0]
         }&part=${listPartIds.slice(1, listPartIds.length).join('&part=')}`;
@@ -647,8 +650,10 @@ class ListeningCrawler {
         
         interface Listening {
           title: string;
-          questions: Question[];  // Mảng câu hỏi
+          questions?: { number: number; text: string; answer: string }[];
         }
+        
+        
         
         // Save listening test to database
         for (const idx in detailListening) {
@@ -658,17 +663,20 @@ class ListeningCrawler {
           
           await this.saveListeningTestToDatabase({
             ...listening,
-            questionGroups: (listening.questions ?? []).map(q => ({
-              title: q.text ?? "Unnamed Group",  // Truy cập vào `text` của `q` thay vì `questions`
-              questions: [{  // Truy cập trực tiếp vào các thuộc tính `number`, `text`, và `answer` của `q`
-                number: q.number,
-                text: q.text,
-                answer: q.answer
-              }]
-            })),
-            title: listening.title || "Default Title",  // Truy cập vào `title` của `listening`
+            questionGroups: Array.isArray(listening.questions) 
+  ? listening.questions.map(q => ({
+      title: typeof q.text === 'string' ? q.text : "Unnamed Group",
+      questions: [{
+        number: typeof q.number === 'number' ? q.number : 0,
+        text: typeof q.text === 'string' ? q.text : "",
+        answer: typeof q.answer === 'string' ? q.answer : ""
+      }]
+    })) 
+  : []
+,
+            title: (listening as any)?.title ?? "Default Title",            
             listeningId,
-            partId,
+            partId: typeof partId === "string" ? partId : "defaultPartId",
             originalLink: practiceLink,
             info: {
               duration: result.info?.duration ?? "N/A",
@@ -682,9 +690,14 @@ class ListeningCrawler {
         
         
         
-        questions = detailListening.flatMap((item) =>
-          item.questions ? item.questions.flatMap((q) => q.questions ?? []) : []
+        questions = detailListening.flatMap((item: any) =>
+          (item.questions ?? []).flatMap((group: any) => group.questions ?? [])
         );
+        
+        
+        
+        
+        
         
         
         
