@@ -11,14 +11,12 @@ import { QuestionEntity } from './entities/reading-question.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, InsertResult,  QueryRunner, Repository } from 'typeorm';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import * as fs from 'fs';
 import { ListeningEntity } from './entities/listening.entity';
 import { ListeningQuestionGroupEntity } from './entities/listening-question-group.entity';
 import { ListeningQuestionEntity } from './entities/listening-question.entity';
 import { Logger } from '@nestjs/common';
-import * as path from 'path';
-import { url } from 'inspector';
-import { ApiCookieAuth } from '@nestjs/swagger';
+import { Buffer } from "buffer";
+
 
 
 
@@ -277,7 +275,7 @@ export class Study4Service {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         cf_clearance:
-          't9aMCXiaBpuY058aJ6LX30lsujAkOcpCTpu9BRYTTgA-1737993386-1.2.1.1-LbZc11uocGTX4mLPZwQr076xgH.w19sNrCdDN2F46xTU2DGzoqaoVz8pfyMNCzyKGDuaxuvatlL2.wMQ07pfPF13cX4TMJDG9xy2SS84hYylffFWhpA_GsdQLm82srP.MuCqpocgPir3yFrQM2kSSvxRurDDSmNpigwouf.0JbP8w76QGQ1KCG2xt1phcMM_wlwDy96VTW2.9d439qRoZal0YUyHcEgGpvlWd1x3VD.ONfYNcXR7Z5mAMSEC7dnuusDyjYPmscGdszpK_O56QAyWyPnF.qqgsG5YUILcD7y_wkJdA_NhXHiT_82xh97ryH.bkwlt8tafHlITJj9hZg',
+          'KTrSxszDojrvo0bAZ13Z_LYeRtv2ONRNuvQUvwOQ4tw-1739788108-1.2.1.1-CMvehw6C89OusD9ceNZ_HafCiRNyPcUh.JN8rbeTMyHqADhdLN8K.DIjC8y_KKoOxNN.1A7QG1BJHTIjfrxuOFLYYk4V653Q9eZuDa9uuWAkeeoAg4RE5V3btm6LmyFKs8TAAMCn015DgxmSaUEgKHVaens6NDmt7n0j1Qbkz76yssBBxdrkcwXq6pwqmclbPmEC.p0ZJYVUvGCqnyNTt3FoDdbvTCLjRigjTK3dnoi8w.wsNFkK9lq7oenAijp8IgvGGA6PYl5.IY9YGtLoiRZ3Qc9bw3VeJHpYahHX2NE',
       };
 
       const response = await axios.get(url, {
@@ -696,14 +694,6 @@ class ListeningCrawler {
           (item.questions ?? []).flatMap((group: any) => group.questions ?? [])
         );
         
-        
-        
-        
-        
-        
-        
-        
-      
         this.logger.log(
           { totalQuestion: questions.length },
           'Crawl questions',
@@ -791,11 +781,7 @@ class ListeningCrawler {
         audioLinks,
       });
   
-      const filePath = path.resolve(__dirname, 'listening.txt');
-      console.log('Saving listening data to:', filePath);
-      console.log('HTML Content:', listening.htmlContent); // Log HTML content
-      fs.appendFileSync(filePath, listening.htmlContent + '\n\n');
-      console.log('Data appended to file.'); // Log success
+      
     }
   }
 
@@ -984,23 +970,26 @@ class ListeningCrawler {
 
 }
  
-   console.log("Study4 Service is running...");
-  (async () => {
-    console.log('🛠️ Bắt đầu kiểm tra crawl bài test...');
-    
-    const sessionId = '9sx4ahbmsitrpxtffjz71g7pbi9w7756';  // Cập nhật sessionId thật nếu cần
-    const csrfToken = 'OOEmRZjnn3CopOSwfQhThXgdaMfbIg3kmzcpvkq8SDFjsFIRXj6R9eP3vIPuMRY3';  // Cập nhật csrfToken thật nếu cần
-    const testUrl = 'https://study4.com/tests/1264/practice/?part=3331';
-  
-    const crawler = new ListeningCrawler();
-    
-    try {
-      const result = await crawler.parseDetailListeningTest(testUrl, sessionId, csrfToken);
-      console.log('🎯 Kết quả crawl bài test:', JSON.stringify(result, null, 2));
-    } catch (err) {
-      console.error('❌ Lỗi trong quá trình crawl:', err);
-    }
-  })();
+console.log("Study4 Service is running...");
+
+import puppeteer from 'puppeteer';
+
+
+(async () => {
+  const browser = await puppeteer.launch({ headless: false }); // Chạy với giao diện thật
+  const page = await browser.newPage();
+
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
+
+  await page.goto('https://study4.com/tests/2010/practice/?part=6018', { waitUntil: 'networkidle2' });
+
+  const content = await page.content();
+  console.log('✅ HTML sau khi vượt Cloudflare:', content);
+
+  await browser.close();
+})();
+
+
   
 
   
