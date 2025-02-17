@@ -18,23 +18,11 @@ import { ListeningQuestionEntity } from './entities/listening-question.entity';
 import { Logger } from '@nestjs/common';
 import * as path from 'path';
 import { url } from 'inspector';
+import { ApiCookieAuth } from '@nestjs/swagger';
 
 
 
-axios.get('https://study4.com/tests/2010/practice/?part=6018', {
-  timeout: 10000  // Tăng thời gian chờ lên 10 giây
-})
-  .then(response => {
-    console.log(response.data);
-  })
-  .catch(error => {
-    console.error('Error:', error);
-  });
-axiosRetry(axios, {
-  retries: 3, // Số lần thử lại
-  retryDelay: (retryCount) => retryCount * 2000, // Tăng dần thời gian chờ
-  retryCondition: (error) => axiosRetry.isNetworkError(error) || error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT',
-});
+
 
 
 export interface QuestionForm {
@@ -560,9 +548,20 @@ export class Study4Service {
 
 
 
-
-
-
+axios.get('https://study4.com/tests/2010/practice/?part=6019', {
+  timeout: 10000  // Tăng thời gian chờ lên 10 giây
+})
+  .then(response => {
+    console.log(response.data);
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+axiosRetry(axios, {
+  retries: 3, // Số lần thử lại
+  retryDelay: (retryCount) => retryCount * 2000, // Tăng dần thời gian chờ
+  retryCondition: (error) => axiosRetry.isNetworkError(error) || error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT',
+});
 
 
 
@@ -597,16 +596,19 @@ class ListeningCrawler {
   
   async crawlListeningTest(_sessionId: string, _csrfToken: string) {
     let page = 1;
-    const sessionId = _sessionId || 'nxz0jqtvofig5m0rv0tc26q2qftakuc6';
+    const sessionId = _sessionId || '52x956o6i8dpuym3f2v3eanx44dkdo4';
     const csrfToken =
       _csrfToken ||
-      '33Itcf79rUSXy6lC4RpYyTQtC3ESgEwfaSDnaFwC9IJMUTMLKQkIoraakqVpvQ1u';
+      'TyO6GoUXz9XmKdKUzg0m1znCK6nvOGCUFdJoM4X4ZMcrAJxSQVycNDDvclKqLZI9';
   
     this.logger.log({ sessionId }, 'Crawling listening tests');
   
     while (true) {
-      const listListening = await this.parseListListeningTest(`https://study4.com/tests/ielts/?term=listening&page=${page}`, sessionId, csrfToken);
-
+      const listListening = await this.parseListListeningTest(
+        `https://study4.com/tests/ielts/?term=listening&page=${page}`,
+        sessionId,
+        csrfToken
+      );     
   
       if (listListening.length === 0) {
         this.logger.log('End crawl listening. No more pages');
@@ -641,7 +643,7 @@ class ListeningCrawler {
         this.logger.log({ practiceLink }, 'Crawl practice link');
   
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        const detailListening = await this.parseDetailListeningTest(practiceLink, sessionId);
+        const detailListening = await this.parseDetailListeningTest(practiceLink, sessionId, csrfToken);
         
         interface questionGroups {
           title: string;
@@ -716,9 +718,9 @@ class ListeningCrawler {
     const response = await axios.get(url);
     return response.data;
   }
-  async parseListListeningTest(page: string, sessionId: string, csrfToken: string) {
+  async parseListListeningTest(page: string, sessionId: string, csrfToken: string,) {
     try {
-      const url = `${this.baseUrl}/tests/ielts/?term=listening&page=${page}`;
+      const url = `${this.baseUrl}/tests/?term=listening&page=${page}`;
       const headers = {
         Cookie: `sessionid=${sessionId}; csrftoken=${csrfToken}`,
         'User-Agent':
@@ -763,7 +765,7 @@ class ListeningCrawler {
     const practiceLink = `${baseLink}/practice/?part=${parts.map(p => p.partId).join('&part=')}`;
     this.logger.log({ practiceLink }, 'Crawling practice link');
     
-    const detailListening = await this.parseDetailListeningTest(practiceLink, sessionId);
+    const detailListening = await this.parseDetailListeningTest(practiceLink, sessionId, this.baseUrl);
     const testTitle = await this.extractTitleFromPage(practiceLink, sessionId);
     
     for (const [index, listening] of detailListening.entries()) {
@@ -809,7 +811,7 @@ class ListeningCrawler {
     const headers = {
       Cookie: `sessionid=${params.sessionId}; csrftoken=${params.csrfToken}`,
       'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',  
     };
   
     try {
@@ -827,40 +829,46 @@ class ListeningCrawler {
     }
   }
   
-
-  async parseDetailListeningTest(url: string, sessionId: string) {
+  async parseDetailListeningTest(url: string, sessionId: string, csrfToken: string) {
     try {
-      const headers = this.getDynamicHeaders(sessionId);
-      const response = await axios.get(url, { headers });
-      const $ = cheerio.load(response.data);
+      const fullCookies = `SESSION_ID=${sessionId}; XSRF-TOKEN=${csrfToken}; csrftoken=${csrfToken}; study4_session=xxxxxx`; // Thêm tất cả cookies từ trình duyệt
   
-      return $('.question-group').map((_, el) => {
-        const questions = $(el).find('.question').map((__, q) => ({
-          number: $(q).find('.question-number').text().trim(),
-          text: $(q).find('.question-text').text().trim(),
-          answer: $(q).find('.question-answer').text().trim(),
-        })).get();
-        
-        return { 
-          questions,  // 🛠️ Kiểm tra xem `questions` có tồn tại không
-          htmlContent: $.html(el) 
-        };
-      }).get();
+      const response = await axios.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+          'Referer': 'https://study4.com/',
+          'Origin': 'https://study4.com',
+          'Cookie': fullCookies,
+          'X-CSRF-Token': csrfToken,
+        }
+      });
+  
+  
+      if (response.data.includes('<title>Log In - STUDY4</title>')) {
+        throw new Error("Bị chuyển hướng đến trang đăng nhập. Kiểm tra lại cookie hoặc sessionId.");
+      }
+  
+      return response.data;
     } catch (error) {
-      this.logger.error({ error }, 'Error parsing listening test details');
-      return [];
+      console.error('❌ Lỗi khi lấy dữ liệu:', error);
+      throw error;
     }
   }
+  
+
   
   /**
    * Hàm tạo headers động, hỗ trợ cookie và User-Agent
    */
-  private getDynamicHeaders(sessionId: string) {
+  private getDynamicHeaders(sessionId: string, csrfToken?: string) {
     return {
       Cookie: `sessionid=${sessionId}`,
-      'User-Agent': this.getRandomUserAgent(), // Dùng User-Agent ngẫu nhiên
+      'User-Agent': this.getRandomUserAgent(),
+      'Referer': 'https://study4.com/tests/',
+      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}), // Nếu cần CSRF Token
     };
   }
+  
   
   /**
    * Trả về một User-Agent ngẫu nhiên để tránh bị chặn
@@ -975,25 +983,25 @@ class ListeningCrawler {
   
 
 }
-
-  console.log("Study4 Service is running...");
+ 
+   console.log("Study4 Service is running...");
   (async () => {
-    console.log('🛠️ Bắt đầu chạy ListeningCrawler...');
-  
-    const sessionId = 'fake-session-id';
-    const csrfToken = 'fake-csrf-token';
+    console.log('🛠️ Bắt đầu kiểm tra crawl bài test...');
     
+    const sessionId = '9sx4ahbmsitrpxtffjz71g7pbi9w7756';  // Cập nhật sessionId thật nếu cần
+    const csrfToken = 'OOEmRZjnn3CopOSwfQhThXgdaMfbIg3kmzcpvkq8SDFjsFIRXj6R9eP3vIPuMRY3';  // Cập nhật csrfToken thật nếu cần
+    const testUrl = 'https://study4.com/tests/1264/practice/?part=3331';
+  
     const crawler = new ListeningCrawler();
-    console.log('✅ ListeningCrawler đã được khởi tạo!');
-  
+    
     try {
-      await crawler.crawlListeningTest(sessionId, csrfToken);
-      console.log('🎯 Hoàn thành crawl dữ liệu!');
-  
+      const result = await crawler.parseDetailListeningTest(testUrl, sessionId, csrfToken);
+      console.log('🎯 Kết quả crawl bài test:', JSON.stringify(result, null, 2));
     } catch (err) {
-      console.error('❌ Lỗi trong quá trình crawl hoặc lưu dữ liệu:', err);
+      console.error('❌ Lỗi trong quá trình crawl:', err);
     }
   })();
+  
 
   
   
