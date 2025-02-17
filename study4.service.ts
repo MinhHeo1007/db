@@ -275,7 +275,7 @@ export class Study4Service {
         'User-Agent':
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         cf_clearance:
-          'KTrSxszDojrvo0bAZ13Z_LYeRtv2ONRNuvQUvwOQ4tw-1739788108-1.2.1.1-CMvehw6C89OusD9ceNZ_HafCiRNyPcUh.JN8rbeTMyHqADhdLN8K.DIjC8y_KKoOxNN.1A7QG1BJHTIjfrxuOFLYYk4V653Q9eZuDa9uuWAkeeoAg4RE5V3btm6LmyFKs8TAAMCn015DgxmSaUEgKHVaens6NDmt7n0j1Qbkz76yssBBxdrkcwXq6pwqmclbPmEC.p0ZJYVUvGCqnyNTt3FoDdbvTCLjRigjTK3dnoi8w.wsNFkK9lq7oenAijp8IgvGGA6PYl5.IY9YGtLoiRZ3Qc9bw3VeJHpYahHX2NE',
+          'sCLb4qhFebzjGI2WXI3HoRyOFTmSNvmhECWcYa1ydpM-1739809200-1.2.1.1-IMIiI4ObGChKtevQ0DIulF1SyZZNZnkLpzC4tkZ8CeaUC_NaX.csciLOtKzwptYd9yf8O6H2MQq30GbUcWtTQ6eB0kAsv89CXxI.OLKe6Rz8atPSl6.j.a3oxBsBKfRBJAMBCnzCeKMODoBn7liAG2e_Bydy619hkfBFmi7Gexxt9PQxZ0xW0R6c7X9SlgYTob4PmCXO9OWRiemhGpABJ0SeYmqxJg_kJrcSfr2QYaG._xk0d5R2qj2j1pznVCHqcXCKk1KLNLZ9ZPPA6uakIPQs8CZGQDACnrpIar52GMM',
       };
 
       const response = await axios.get(url, {
@@ -972,22 +972,63 @@ class ListeningCrawler {
  
 console.log("Study4 Service is running...");
 
-import puppeteer from 'puppeteer';
 
+
+const puppeteer = require('puppeteer');
 
 (async () => {
-  const browser = await puppeteer.launch({ headless: false }); // Chạy với giao diện thật
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
-  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36');
+  // Thêm cookies bạn có
+  await page.setCookie(
+    {
+      name: 'cf_clearance',
+      value: 'zqcOkk5TBXPT6ATP3ZkZ1fHJHxTyaQ.pqjTPCslpolA-1739812938-1.2.1.1-pVANoiBmsyVSRSa3PcyG0l8cTXTljWxmecP0tiTp0Wl_N3smVFgllNmkHEMq8BS3Fjbjdiuu7WBHmD92ZQmBRTL5PcNv27I00OJcLcRmbUuAPAiYsz9wIgMPB3MXKPJ1A4x7GUucNhnP9blK8yVgaVRxNbDkaR9LLK94blhq._SfUXFsoAE.uUHtRAeTNKAE9BYsXHbTrjiB66KpOYghspKobKVoWeUXhXvPJppPBxYbv6OvNgnxIvnIlKR5DQKfY7UskdjdOlSJ9XzZ3ehSzElMIusnZkYotP63yNXi8Wg',
+      domain: 'study4.com',
+      path: '/',
+    },
+    {
+      name: 'Token',
+      value: 'TyO6GoUXz9XmKdKUzg0m1znCK6nvOGCUFdJoM4X4ZMcrAJxSQVycNDDvclKqLZI9',
+      domain: 'study4.com',
+      path: '/',
+    },
+    {
+      name: 'sessionid',
+      value: '5g2x956o6i8dpuym3f2v3eanx44dkdo4',
+      domain: 'study4.com',
+      path: '/',
+    }
+  );
 
-  await page.goto('https://study4.com/tests/2010/practice/?part=6018', { waitUntil: 'networkidle2' });
+  // Điều hướng tới trang yêu cầu
+  await page.goto('https://study4.com/tests/2010/practice/?part=6019', { waitUntil: 'networkidle2' });
 
+  // Kiểm tra xem có phải trang đăng nhập hay không
+  const url = await page.url();
+  if (url.includes('login')) {
+    console.log('Trang yêu cầu đăng nhập!');
+    return;
+  }
+
+  // Tiến hành crawl hoặc xử lý dữ liệu khi đã đăng nhập thành công
   const content = await page.content();
-  console.log('✅ HTML sau khi vượt Cloudflare:', content);
+  console.log('Nội dung trang:', content);
 
   await browser.close();
 })();
+
+
+
+
+
+
+
+
+
+
+
 
 
   
