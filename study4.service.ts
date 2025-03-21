@@ -16,6 +16,7 @@ import { ListeningQuestionGroupEntity } from './entities/listening-question-grou
 import { ListeningQuestionEntity } from './entities/listening-question.entity';
 import { Logger } from '@nestjs/common';
 import { Buffer } from "buffer";
+import { ListeningListDto } from './dto/listening-list.dto';
 
 
 
@@ -565,10 +566,19 @@ axiosRetry(axios, {
 
 @Injectable()
   export class ListeningService {
+    getListeningTests(query: ListeningListDto) {
+      throw new Error('Method not implemented.');
+    }
+    getListeningTestById(id: string) {
+      throw new Error('Method not implemented.');
+    }
     private readonly logger = new Logger(ListeningService.name);
   
+    
+    
+    
     constructor(
-      @InjectRepository(ListeningEntity)
+      @InjectRepository(ListeningEntity)  
       private listeningTestRepository: Repository<ListeningEntity>,
   
       @InjectRepository(ListeningQuestionGroupEntity)
@@ -969,7 +979,7 @@ class ListeningCrawler {
   
 
 }
- 
+ /*
 console.log("Study4 Service is running...");
 
 
@@ -1003,7 +1013,7 @@ const puppeteer = require('puppeteer');
   );
 
   // Điều hướng tới trang yêu cầu
-  await page.goto('https://study4.com/tests/2010/practice/?part=6019', { waitUntil: 'networkidle2' });
+  await page.goto('https://study4.com/tests/2010/ielts-simulation-listening-test-1/', { waitUntil: 'networkidle2' });
 
   // Kiểm tra xem có phải trang đăng nhập hay không
   const url = await page.url();
@@ -1018,6 +1028,8 @@ const puppeteer = require('puppeteer');
 
   await browser.close();
 })();
+
+*/
 
 
 
